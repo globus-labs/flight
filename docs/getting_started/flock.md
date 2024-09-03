@@ -11,7 +11,7 @@ Interactive mode involves creating a ``NetworkX.DiGraph()`` object directly and 
 The recommended approach is ***file mode***. In this mode, you define the Flock network using a supported file type (e.g., `*.yaml`) and simply use it to create the Flock instance.
 
 ```python
-from flox.flock import Flock
+from flight.flock import Flock
 
 f = "my_flock.yaml"
 flock = Flock.from_yaml(f)

@@ -1,8 +1,8 @@
 Here, we provide a brief high-level overview of how to get started with FLoX.
 
 ```python
-from flox.run import federated_fit
-from flox.flock import Flock
+from flight.run import federated_fit
+from flight.flock import Flock
 
 flock = Flock.from_yaml("sample-flock.yml")
 results = federated_fit(

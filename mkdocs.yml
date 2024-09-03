@@ -113,7 +113,7 @@ plugins:
           setup_commands:
             - import pytkdocs_tweaks
             - pytkdocs_tweaks.main()
-          paths: [ flox ]
+          paths: [ flight ]
           load_external_modules: true
           options:
             docstring_section_style: spacy # list

@@ -7,10 +7,10 @@ from torch import nn
 from torchvision.datasets import MNIST
 from torchvision.transforms import ToTensor
 
-from flox import federated_fit
-from flox.data.utils import federated_split
-from flox.flock import Flock
-from flox.nn import FloxModule
+from flight import federated_fit
+from flight.data.utils import federated_split
+from flight.flock import Flock
+from flight.nn import FloxModule
 
 
 class MyModule(FloxModule):

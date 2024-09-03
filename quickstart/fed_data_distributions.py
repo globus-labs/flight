@@ -7,8 +7,8 @@ from torchvision.transforms import ToTensor
 
 try:
     sys.path.append("..")
-    from flox.data.utils import fed_barplot, federated_split
-    from flox.flock import Flock
+    from flight.data.utils import fed_barplot, federated_split
+    from flight.flock import Flock
 except Exception as e:
     raise ImportError("unable to import FloX libraries") from e
 

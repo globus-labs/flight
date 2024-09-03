@@ -1,4 +1,4 @@
-from flox.flock import Flock
+from flight.flock import Flock
 
 
 def test_str_ids():

@@ -31,7 +31,7 @@ FLoX is a simple, highly-customizable, and easy-to-deploy framework for hierarch
 systems built on top of the Globus Compute platform.
 
 ```python title="Basic FLoX Example" linenums="1"
-from flox import Flock, federated_fit
+from flight import Flock, federated_fit
 from torch import nn
 
 

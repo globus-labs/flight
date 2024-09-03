@@ -10,11 +10,11 @@ from torchvision.transforms import ToTensor
 
 try:
     sys.path.append("..")
-    from flox.data.utils import federated_split
-    from flox.flock import Flock
-    from flox.nn import FloxModule
-    from flox.run import federated_fit
-    from flox.strategies_depr import FedProx
+    from flight.data.utils import federated_split
+    from flight.flock import Flock
+    from flight.nn import FloxModule
+    from flight.run import federated_fit
+    from flight.strategies_depr import FedProx
 except Exception as e:
     raise ImportError("unable to import FloX libraries") from e
 
