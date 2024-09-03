@@ -8,7 +8,7 @@ from flight.strategies.impl.fedsgd import FedSGDClient
 from flight.strategies.strategy import DefaultAggregatorStrategy, DefaultWorkerStrategy
 
 if t.TYPE_CHECKING:
-    from flight.flock import AggrState, NodeID, NodeState, WorkerState
+    from flight.topo import AggrState, NodeID, NodeState, WorkerState
     from flight.nn.typing import Params
 
 

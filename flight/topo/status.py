@@ -1,7 +1,7 @@
 from enum import Enum, auto
 
 
-class FlockNodeStatus(Enum):
+class TopoNodeStatus(Enum):
     UNAVAILABLE = auto()
     AVAILABLE = auto()
     RUNNING = auto()

@@ -3,7 +3,7 @@ from __future__ import annotations
 import typing as t
 
 if t.TYPE_CHECKING:
-    from flight.flock import AggrState, NodeID, NodeState
+    from flight.topo import AggrState, NodeID, NodeState
     from flight.nn.typing import Params
 
 

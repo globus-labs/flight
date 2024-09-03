@@ -11,7 +11,7 @@ from torchvision.transforms import ToTensor
 try:
     sys.path.append("..")
     from flight.data.utils import federated_split
-    from flight.flock import Flock
+    from flight.topo import Topology
     from flight.nn import FloxModule
     from flight.run import federated_fit
     from flight.strategies_depr import FedProx
@@ -47,16 +47,16 @@ class MyModule(FloxModule):
 
 
 def main():
-    flock = Flock.from_yaml("../examples/flocks/complex.yaml")
-    # flock = Flock.from_yaml("../examples/flocks/gce-complex-sample.yaml")
+    topo = Topology.from_yaml("../examples/topos/complex.yaml")
+    # topo = Topology.from_yaml("../examples/topos/gce-complex-sample.yaml")
     mnist = FashionMNIST(
         root=os.environ["TORCH_DATASETS"],
         download=False,
         train=True,
         transform=ToTensor(),
     )
-    fed_data = federated_split(mnist, flock, 10, 1.0, 1.0)
-    assert len(fed_data) == len(list(flock.workers))
+    fed_data = federated_split(mnist, topo, 10, 1.0, 1.0)
+    assert len(fed_data) == len(list(topo.workers))
 
     df_list = []
     strategies = {
@@ -67,7 +67,7 @@ def main():
     for strategy_label, strategy_cls in strategies.items():
         print(f">>> Running FLoX with strategy={strategy_label}.")
         _, df = federated_fit(
-            flock,
+            topo,
             MyModule(),
             fed_data,
             5,

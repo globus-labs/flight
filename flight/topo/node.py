@@ -1,13 +1,15 @@
+import typing as t
+
 from dataclasses import dataclass
 from enum import Enum, auto
 from uuid import UUID
 
-NodeID = int | str  # NewType("NodeID", int | str)
+NodeID: t.TypeAlias = int | str
 
 
 class NodeKind(Enum):
     """
-    The different kinds of nodes that can exist in a Flock topology.
+    The different kinds of nodes that can exist in a ``Topology``.
     """
 
     LEADER = auto()  # root
@@ -17,16 +19,19 @@ class NodeKind(Enum):
     @staticmethod
     def from_str(s: str) -> "NodeKind":
         """
-        Converts a string (namely, 'leader', 'aggregator', and 'worker') into their respective item in this Enum.
+        Converts a string (namely, 'leader', 'aggregator', and 'worker') into their
+        respective item in this Enum.
 
-        For convenience, this function is *not* sensitive to capitalization or trailing whitespace (i.e.,
-        `NodeKind.from_str('LeaAder  ')` and `NodeKind.from_str('leader')` are both valid and equivalent).
+        For convenience, this function is *not* sensitive to capitalization or trailing
+        whitespace (i.e., `NodeKind.from_str('LeaAder  ')` and
+        `NodeKind.from_str('leader')` are both valid and equivalent).
 
         Args:
             s (str): String to convert into the respective Enum item.
 
         Throws:
-            ValueError: Thrown by illegal string values do not match the above description.
+            - `ValueError`: Thrown by illegal string values do not match the above
+                description.
 
         Returns:
             NodeKind corresponding to the passed in String.
@@ -60,21 +65,21 @@ class NodeKind(Enum):
 
 
 @dataclass(frozen=True)
-class FlockNode:
+class Node:
     """
-    A node in a Flock.
+    A node in a `Topology`.
 
     Args:
-        idx (NodeID): The index of the node within the Flock as a whole (this is assigned by its `Flock`).
+        idx (NodeID): The index of the node within the ``Topology`` as a whole.
         kind (NodeKind): The kind of node.
-        globus_compute_endpoint (UUID | None): Required if you want to run fitting on Globus Compute;
-            defaults to None.
-        proxystore_endpoint (UUID | None): Required if you want to run fitting with Proxystore
-            (recommended if you are using Globus Compute); defaults to None.
+        globus_compute_endpoint (UUID | None): Required if you want to run fitting on
+            Globus Compute; defaults to None.
+        proxystore_endpoint (UUID | None): Required if you want to run fitting with
+            Proxystore (recommended if you are using Globus Compute); defaults to None.
     """
 
     idx: NodeID
-    """Assigned during the Flock construction (i.e., not in .yaml/.json file)"""
+    """Assigned during the Topology construction (i.e., not in .yaml/.json file)"""
 
     kind: NodeKind
     """Which kind of node."""

@@ -8,13 +8,13 @@ import pandas as pd
 from pandas import DataFrame
 from tqdm import tqdm
 
-from flight.flock.states import AggrState, NodeState, WorkerState
+from flight.topo.states import AggrState, NodeState, WorkerState
 from flight.jobs import LocalTrainJob, DebugLocalTrainJob
 from flight.runtime.process.process import Process
 
 if typing.TYPE_CHECKING:
     from flight.data import FloxDataset
-    from flight.flock import Flock, NodeID, FlockNode
+    from flight.topo import Topology, NodeID, Node
     from flight.nn.typing import Params
     from flight.nn import FloxModule
     from flight.runtime import Result
@@ -34,27 +34,28 @@ class AsyncProcess(Process):
     [synchronous FL process][flight.runtime.process.process_sync.SyncProcess].
 
     Notes:
-        Currently, this process is only compatible with two-tier ``Flock`` topologies.
+        Currently, this process is only compatible with two-tier ``Topology`` instances.
     """
 
     def __init__(
         self,
         runtime: Runtime,
-        flock: Flock,
+        topo: Topology,
         num_global_rounds: int,
         module: FloxModule,
         dataset: FloxDataset,
         strategy: Strategy,
         *args,
     ):
-        # assert that the flock is 2-tier
-        if not flock.is_two_tier:
+        # assert that the topo is 2-tier
+        if not topo.is_two_tier:
             raise ValueError(
-                "Currently, FLoX only supports two-tier topologies for ``AsyncProcess`` execution."
+                "Currently, FLoX only supports two-tier topologies for "
+                "``AsyncProcess`` execution."
             )
 
         self.runtime = runtime
-        self.flock = flock
+        self.topo = topo
         self.num_global_rounds = num_global_rounds
         self.global_model = module
         self.dataset = dataset
@@ -63,9 +64,9 @@ class AsyncProcess(Process):
         self.debug_mode = False
         self.params = self.global_model.state_dict()
 
-        assert self.flock.leader is not None
+        assert self.topo.leader is not None
         self.state = AggrState(
-            self.flock.leader.idx, flock.children(flock.leader), self.global_model
+            self.topo.leader.idx, topo.children(topo.leader), self.global_model
         )
 
     def start(self, debug_mode: bool = False) -> tuple[FloxModule, DataFrame]:
@@ -78,7 +79,7 @@ class AsyncProcess(Process):
                 self.params = self.global_model.state_dict()
                 self.state.global_model = self.global_model
 
-        if not self.flock.two_tier:
+        if not self.topo.two_tier:
             raise ValueError
 
         histories: list[DataFrame] = []
@@ -86,18 +87,18 @@ class AsyncProcess(Process):
         worker_states: dict[NodeID, NodeState] = {}
         worker_state_dicts: dict[NodeID, Params] = {}
 
-        for worker in self.flock.workers:
+        for worker in self.topo.workers:
             worker_rounds[worker.idx] = 0
             worker_states[worker.idx] = WorkerState(worker.idx)
             worker_state_dicts[worker.idx] = deepcopy(self.global_model.state_dict())
 
         progress_bar = tqdm(
-            total=self.num_global_rounds * self.flock.number_of_workers,
+            total=self.num_global_rounds * self.topo.number_of_workers,
             desc="federated_fit::async",
         )
         futures = {
-            self._worker_tasks(worker, self.flock.leader)
-            for worker in self.flock.workers
+            self._worker_tasks(worker, self.topo.leader)
+            for worker in self.topo.workers
         }
 
         while futures:
@@ -116,7 +117,7 @@ class AsyncProcess(Process):
                 if worker_rounds[result.node_idx] >= self.num_global_rounds:
                     continue
 
-                worker = self.flock[result.node_idx]
+                worker = self.topo[result.node_idx]
                 worker_states[worker.idx] = result.node_state
                 worker_state_dicts[worker.idx] = result.params
 
@@ -140,7 +141,7 @@ class AsyncProcess(Process):
                 #     result.history["test/acc"] = test_acc
                 #     result.history["test/loss"] = test_loss
 
-                fut = self._worker_tasks(worker, self.flock.leader)
+                fut = self._worker_tasks(worker, self.topo.leader)
                 futures.add(fut)
                 worker_rounds[result.node_idx] += 1
                 progress_bar.update()
@@ -148,7 +149,7 @@ class AsyncProcess(Process):
         # TODO: Obviously fix this.
         return self.global_model, pd.concat(histories)
 
-    def _worker_tasks(self, node: FlockNode, parent: FlockNode) -> Future[Result]:
+    def _worker_tasks(self, node: Node, parent: Node) -> Future[Result]:
         if self.debug_mode:
             job = DebugLocalTrainJob()
             dataset = None

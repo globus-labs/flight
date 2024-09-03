@@ -8,7 +8,7 @@ from flight.runtime.utils import set_parent_future
 if t.TYPE_CHECKING:
     from concurrent.futures import Future
 
-    from flight.flock import FlockNode
+    from flight.topo import Node
     from flight.jobs import AggregableJob
     from flight.runtime.runtime import Runtime
     from flight.strategies import AggregatorStrategy
@@ -17,10 +17,10 @@ if t.TYPE_CHECKING:
 def all_child_futures_finished_cbk(
     job: AggregableJob,
     parent_future: Future,
-    children: t.Iterable[FlockNode],
+    children: t.Iterable[Node],
     selected_children_futures: t.Iterable[Future],
     # global_model: FloxModule,
-    node: FlockNode,
+    node: Node,
     runtime: Runtime,
     aggr_strategy: AggregatorStrategy,
     _: Future,

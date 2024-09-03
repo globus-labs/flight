@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from pandas import DataFrame
 
 from flight.data import FederatedSubsets, FloxDataset, LocalDataset
-from flight.flock import FlockNode
+from flight.topo import Node
 from flight.nn.model import FloxModule
 
 
@@ -15,11 +15,11 @@ class Process(ABC):
         """Starts the FL process.
 
         Returns:
-            The trained global module hosted on the leader of `flock`.
+            The trained global module hosted on the leader of `topo`.
             The history metrics from training.
         """
 
-    def fetch_worker_data(self, node: FlockNode):
+    def fetch_worker_data(self, node: Node):
         match self.dataset:
             case FederatedSubsets():
                 return self.dataset.load(node)

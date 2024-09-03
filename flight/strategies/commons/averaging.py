@@ -8,7 +8,7 @@ import torch
 if typing.TYPE_CHECKING:
     from collections.abc import Mapping
 
-    from flight.flock import NodeID
+    from flight.topo import NodeID
     from flight.nn.typing import Params
 
 
@@ -16,12 +16,16 @@ def average_state_dicts(
     state_dicts: Mapping[NodeID, Params],
     weights: Mapping[NodeID, float] | None = None,
 ) -> Params:
-    """Averages the parameters given by ``global_model.params()`` from a set of ``FlockNodes``.
+    """
+    Averages the parameters given by ``global_model.params()`` from a set of
+    ``Node``s.
 
     Args:
-        state_dicts (dict[NodeID, Params]): The global_model state dicts of each FlockNode to average.
-        weights (dict[NodeID, float] | None): The weights for each ``FlockNode`` used do weighted averaging. If
-            no weights are provided (i.e., `weights=None`), then standard averaging is done.
+        state_dicts (dict[NodeID, Params]): The global_model state dicts of each Node
+            to average.
+        weights (dict[NodeID, float] | None): The weights for each ``Node`` used do
+            weighted averaging. If no weights are provided (i.e., `weights=None`),
+            then standard averaging is done.
 
     Returns:
         Averaged weights as a ``Params``.

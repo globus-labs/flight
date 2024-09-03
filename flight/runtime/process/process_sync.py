@@ -10,8 +10,8 @@ from pandas import DataFrame
 from tqdm import tqdm
 
 from flight.data import FloxDataset
-from flight.flock import Flock, FlockNode, NodeKind
-from flight.flock.states import AggrState
+from flight.topo import Topology, Node, NodeKind
+from flight.topo.states import AggrState
 from flight.jobs import AggregateJob, DebugLocalTrainJob, LocalTrainJob
 from flight.nn import FloxModule
 from flight.runtime.process.future_callbacks import all_child_futures_finished_cbk
@@ -30,12 +30,12 @@ class SyncProcess(Process):
     Synchronous Federated Learning process.
     """
 
-    flock: Flock
+    topo: Topology
     runtime: Runtime
     global_module: FloxModule
     strategy: Strategy
     dataset: FloxDataset
-    aggr_callback: typing.Any  # TODO: Fix
+    aggr_callback: typing.Any
     params: Params | None
     debug_mode: bool
     pbar_desc: str
@@ -43,13 +43,13 @@ class SyncProcess(Process):
     def __init__(
         self,
         runtime: Runtime,
-        flock: Flock,
+        topo: Topology,
         num_global_rounds: int,
         module: FloxModule,
         dataset: FloxDataset,
         strategy: Strategy,
     ):
-        self.flock = flock
+        self.topo = topo
         self.runtime = runtime
         self.num_global_rounds = num_global_rounds
         self.global_module = module
@@ -92,21 +92,21 @@ class SyncProcess(Process):
 
     def step(
         self,
-        node: FlockNode | None = None,
-        parent: FlockNode | None = None,
+        node: Node | None = None,
+        parent: Node | None = None,
     ) -> Future:
-        flock = self.flock
-        value_err_template = "Illegal kind ({}) of `FlockNode` (ID=`{}`)."
+        topo = self.topo
+        value_err_template = "Illegal kind ({}) of `Node` (ID=`{}`)."
 
         if node is None:
-            assert flock.leader is not None
-            node = flock.leader
-        elif isinstance(node, FlockNode):
+            assert topo.leader is not None
+            node = topo.leader
+        elif isinstance(node, Node):
             node = node
         else:
             raise ValueError
 
-        match flock.get_kind(node):
+        match topo.get_kind(node):
             case NodeKind.LEADER | NodeKind.AGGREGATOR:
                 return self.submit_aggr_job(node)
 
@@ -118,16 +118,16 @@ class SyncProcess(Process):
                     return self.submit_worker_job(node, parent)
 
             case _:
-                kind = flock.get_kind(node)
+                kind = topo.get_kind(node)
                 idx = node.idx
                 raise ValueError(value_err_template.format(kind, idx))
 
     ########################################################################################################
     ########################################################################################################
 
-    def submit_aggr_job(self, node: FlockNode) -> Future[Result]:
+    def submit_aggr_job(self, node: Node) -> Future[Result]:
         # Select worker nodes.
-        children = list(self.flock.children(node.idx))
+        children = list(self.topo.children(node.idx))
         # aggr_state = AggrState(node.idx, children, deepcopy(self.global_model))
         aggr_state = AggrState(node.idx, children, None)
         selected_workers = self.strategy.client_strategy.select_worker_nodes(
@@ -157,10 +157,10 @@ class SyncProcess(Process):
 
         return future
 
-    def submit_aggr_debug_job(self, node: FlockNode) -> Future[Result]:
+    def submit_aggr_debug_job(self, node: Node) -> Future[Result]:
         raise NotImplementedError
 
-    def submit_worker_job(self, node: FlockNode, parent: FlockNode) -> Future[Result]:
+    def submit_worker_job(self, node: Node, parent: Node) -> Future[Result]:
         job = LocalTrainJob()
         data = self.dataset
         worker_strategy = self.strategy.worker_strategy
@@ -177,7 +177,7 @@ class SyncProcess(Process):
         )
 
     def submit_worker_debug_job(
-        self, node: FlockNode, parent: FlockNode
+        self, node: Node, parent: Node
     ) -> Future[Result]:
         job = DebugLocalTrainJob()
         data = self.dataset

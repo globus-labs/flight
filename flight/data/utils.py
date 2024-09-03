@@ -7,23 +7,24 @@ from matplotlib.axes import Axes
 from torch.utils.data import DataLoader, Dataset
 
 from flight.data import FederatedSubsets
-from flight.flock import Flock, NodeID
+from flight.topo import Topology, NodeID
 
 
 # TODO: Implement something similar for regression-based data.
 def federated_split(
     data: Dataset,
-    flock: Flock,
+    topo: Topology,
     num_classes: int,
     samples_alpha: float = 1.0,
     labels_alpha: float = 1.0,
 ) -> FederatedSubsets:
     r"""
-    Splits up Datasets across worker nodes in a Flock using Dirichlet distributions for IID and non-IID settings.
+    Splits up Datasets across worker nodes in a Topology using Dirichlet distributions
+    for IID and non-IID settings.
 
-    It is recommended to use an alpha value of 1.0 for either `samples_alpha` want non-IID number of samples across
-    workers. Setting this alpha value to be < 1 will result in extreme cases where many workers will have 0 data
-    samples.
+    It is recommended to use an alpha value of 1.0 for either `samples_alpha` want
+    non-IID number of samples across workers. Setting this alpha value to be < 1 will
+    result in extreme cases where many workers will have 0 data samples.
 
     Notes:
         Currently, this function only works with data for classification tasks with a discrete number
@@ -32,20 +33,20 @@ def federated_split(
 
     Args:
         data (Dataset): The original centralized data object that needs to be split into subsets.
-        flock (Flock): The network to split data across.
+        topo (Topology): The network to split data across.
         num_classes (int): Number of classes available in ``data``.
         samples_alpha (float): The $\alpha>0$ parameter under the Dirichlet distribution for *the number of
-            data samples* each worker node in ``flock`` will have. The number of data samples across all worker
+            data samples* each worker node in ``topo`` will have. The number of data samples across all worker
             nodes become increasingly heterogeneous as $\alpha$ gets larger.
         labels_alpha (float): The $\alpha>0$ parameter under the Dirichlet distribution for the class distributions
-            across worker nodes in ``flock``. The number of data samples across all worker nodes become increasingly
+            across worker nodes in ``topo``. The number of data samples across all worker nodes become increasingly
             heterogeneous as $\alpha$ gets larger.
 
     Examples:
         >>> from torchvision.datasets import MNIST
-        >>> flock = Flock.from_yaml("my_flock.yml")
+        >>> topo = Topology.from_yaml("my_topo.yml")
         >>> data = MNIST()
-        >>> subsets = federated_split(data, flock, num_classes=10, samples_alpha=1., labels_alpha=1.)
+        >>> subsets = federated_split(data, topo, num_classes=10, samples_alpha=1., labels_alpha=1.)
         >>> next(iter(subsets.items()))
         >>> # (NodeID(1), Subset(...)) # TODO: Run a real example and paste it here.
 
@@ -55,7 +56,7 @@ def federated_split(
     assert samples_alpha > 0
     assert labels_alpha > 0
 
-    num_workers = len(list(flock.workers))
+    num_workers = len(list(topo.workers))
     # sample_distr = stats.dirichlet(np.full(num_workers, samples_alpha))
     # label_distr = stats.dirichlet(np.full(num_classes, labels_alpha))
 
@@ -63,7 +64,7 @@ def federated_split(
     sample_distr = np.random.dirichlet(s_alpha)
 
     l_alpha = np.full(num_classes, labels_alpha)
-    label_distr = np.random.dirichlet(l_alpha, size=flock.number_of_workers)
+    label_distr = np.random.dirichlet(l_alpha, size=topo.number_of_workers)
 
     # PyTorch intentionally doesn't define an empty __len__ for ``Dataset``, even though
     # most subclasses implement it.
@@ -77,9 +78,9 @@ def federated_split(
     _num_samples = (sample_distr * data_count).astype(int)
     num_samples_for_workers = {
         worker.idx: num_samples
-        for worker, num_samples in zip(flock.workers, _num_samples)
+        for worker, num_samples in zip(topo.workers, _num_samples)
     }
-    label_probs = {w.idx: label_distr[i] for i, w in enumerate(flock.workers)}
+    label_probs = {w.idx: label_distr[i] for i, w in enumerate(topo.workers)}
 
     indices: dict[NodeID, list[int]] = defaultdict(list)
     loader = DataLoader(data, batch_size=1)
@@ -90,7 +91,7 @@ def federated_split(
 
         probs = []
         temp_workers = []
-        for w in flock.workers:
+        for w in topo.workers:
             if worker_samples[w.idx] < num_samples_for_workers[w.idx]:
                 try:
                     probs.append(label_probs[w.idx][label])
@@ -112,7 +113,7 @@ def federated_split(
             indices[chosen_worker].append(idx)
             worker_samples[chosen_worker] += 1
 
-    # mapping = {w.idx: Subset(data, indices[w.idx]) for w in flock.workers}
+    # mapping = {w.idx: Subset(data, indices[w.idx]) for w in topo.workers}
     return FederatedSubsets(data, indices)
 
 
@@ -125,7 +126,7 @@ def fed_barplot(
     """Plots the label/sample distributions across worker nodes of a ``FederatedSubsets`` as a stacked barplot.
 
     Args:
-        subsets (FederatedSubsets): The federated data subsets cross a ``Flock``.
+        subsets (FederatedSubsets): The federated data subsets cross a ``Topology``.
         num_labels (int): The total number of unique labels in ``fed_data``.
         width (float): The width of the bars.
         ax (Axes): The ``axes`` to draw onto, if provided. If one is not provided, a new one is created.

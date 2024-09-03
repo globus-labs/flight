@@ -3,7 +3,7 @@ from __future__ import annotations
 import typing as t
 from collections import OrderedDict
 
-from flight.flock import AggrState, NodeID, NodeState
+from flight.topo import AggrState, NodeID, NodeState
 from flight.nn.typing import Params
 from flight.strategies import Strategy
 from flight.strategies.strategy import DefaultAggregatorStrategy

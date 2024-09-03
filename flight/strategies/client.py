@@ -3,7 +3,7 @@ from __future__ import annotations
 import typing as t
 
 if t.TYPE_CHECKING:
-    from flight.flock import NodeID
+    from flight.topo import NodeID
 
 
 class ClientStrategy(t.Protocol):

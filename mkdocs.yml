@@ -17,7 +17,7 @@ nav:
       - home/proxystore.md
   - Getting Started:
       - getting_started/index.md
-      - getting_started/flock.md
+      - getting_started/topo.md
       - Strategies:
           - getting_started/strategies_depr/index.md
           - getting_started/strategies_depr/what.md

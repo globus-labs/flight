@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import typing as t
 
-from flight.flock.states import WorkerState
+from flight.topo.states import WorkerState
 
 if t.TYPE_CHECKING:
     import torch

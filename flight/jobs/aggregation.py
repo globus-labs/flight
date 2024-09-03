@@ -1,6 +1,6 @@
 import typing as t
 
-from flight.flock import FlockNode, NodeID
+from flight.topo import Node, NodeID
 from flight.jobs.protocols import AggregableJob
 from flight.runtime.result import Result
 from flight.runtime.transfer import BaseTransfer
@@ -10,8 +10,8 @@ from flight.strategies import AggregatorStrategy
 class AggregateJob(AggregableJob):
     @staticmethod
     def __call__(
-        node: FlockNode,
-        children: t.Iterable[FlockNode],
+        node: Node,
+        children: t.Iterable[Node],
         transfer: BaseTransfer,
         aggr_strategy: AggregatorStrategy,
         results: list[Result],
@@ -19,7 +19,7 @@ class AggregateJob(AggregableJob):
         """Aggregate the state dicts from each of the results.
 
         Args:
-            node (FlockNode): The aggregator node.
+            node (Node): The aggregator node.
             transfer (Transfer): ...
             aggr_strategy (AggregatorStrategy): ...
             results (list[JobResult]): Results from children of ``node``.
@@ -29,7 +29,7 @@ class AggregateJob(AggregableJob):
         """
         import pandas
 
-        from flight.flock.states import AggrState, NodeState
+        from flight.topo.states import AggrState, NodeState
         from flight.runtime import JobResult
 
         child_states: dict[NodeID, NodeState] = {}
@@ -70,8 +70,8 @@ class AggregateJob(AggregableJob):
 class DebugAggregateJob(AggregableJob):
     @staticmethod
     def __call__(
-        node: FlockNode,
-        children: t.Iterable[FlockNode],
+        node: Node,
+        children: t.Iterable[Node],
         transfer: BaseTransfer,
         aggr_strategy: AggregatorStrategy,
         results: list[Result],
@@ -92,7 +92,7 @@ class DebugAggregateJob(AggregableJob):
         import numpy
         import pandas
 
-        from flight.flock.states import AggrState
+        from flight.topo.states import AggrState
         from flight.runtime import JobResult
 
         result = next(iter(results))

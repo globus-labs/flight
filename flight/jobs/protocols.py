@@ -25,7 +25,7 @@ import typing as t
 
 if t.TYPE_CHECKING:
     from flight.data import FloxDataset
-    from flight.flock import FlockNode
+    from flight.topo import Node
     from flight.nn import FloxModule
     from flight.nn.typing import Params
     from flight.runtime import Result
@@ -35,10 +35,11 @@ if t.TYPE_CHECKING:
 
 class LauncherFunction(t.Protocol):
     """
-    Utility protocol that simply identifies any of callable that takes a ``FlockNode`` as its first argument.
+    Utility protocol that simply identifies any of callable that takes a ``Node``
+    as its first argument.
     """
 
-    def __call__(self, node: FlockNode, *args, **kwargs) -> t.Any:
+    def __call__(self, node: Node, *args, **kwargs) -> t.Any:
         pass
 
 
@@ -56,8 +57,8 @@ class AggregableJob(t.Protocol):
 
     @staticmethod
     def __call__(
-        node: FlockNode,
-        children: t.Iterable[FlockNode],
+        node: Node,
+        children: t.Iterable[Node],
         transfer: BaseTransfer,
         aggr_strategy: AggregatorStrategy,
         results: list[Result],
@@ -66,7 +67,7 @@ class AggregableJob(t.Protocol):
         AggrCallable
 
         Args:
-            node (FlockNode):
+            node (Node):
             transfer (BaseTransfer):
             aggr_strategy (AggregatorStrategy):
             results (list[Result]):
@@ -90,8 +91,8 @@ class TrainableJob(t.Protocol):
 
     @staticmethod
     def __call__(
-        node: FlockNode,
-        parent: FlockNode,
+        node: Node,
+        parent: Node,
         global_model: FloxModule,
         module_state_dict: Params,
         dataset: FloxDataset,

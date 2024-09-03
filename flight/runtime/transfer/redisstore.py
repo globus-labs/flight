@@ -13,7 +13,7 @@ if typing.TYPE_CHECKING:
 
     from proxystore.proxy import Proxy
 
-    from flight.flock import Flock
+    from flight.topo import Topology
 
 
 class RedisTransfer(BaseTransfer):

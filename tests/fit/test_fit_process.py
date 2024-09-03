@@ -9,7 +9,7 @@ from torchvision.transforms import ToTensor
 
 from flight import federated_fit
 from flight.data.utils import federated_split
-from flight.flock import Flock
+from flight.topo import Topology
 from flight.nn import FloxModule
 
 
@@ -51,48 +51,48 @@ def data():
 
 
 def test_2_tier_fit(data):
-    flock = Flock.from_yaml("examples/flocks/2-tier.yaml")
+    topo = Topology.from_yaml("examples/topos/2-tier.yaml")
     fed_data = federated_split(
         data,
-        flock,
+        topo,
         10,
         samples_alpha=10.0,
         labels_alpha=10.0,
     )
     module, train_history = federated_fit(
-        flock, MyModule(), fed_data, 2, strategy="fedavg", launcher_kind="thread"
+        topo, MyModule(), fed_data, 2, strategy="fedavg", launcher_kind="thread"
     )
     assert isinstance(module, FloxModule)
     assert isinstance(train_history, pd.DataFrame)
 
 
 def test_3_tier_fit(data):
-    flock = Flock.from_yaml("examples/flocks/3-tier.yaml")
+    topo = Topology.from_yaml("examples/topos/3-tier.yaml")
     fed_data = federated_split(
         data,
-        flock,
+        topo,
         10,
         samples_alpha=10.0,
         labels_alpha=10.0,
     )
     module, train_history = federated_fit(
-        flock, MyModule(), fed_data, 2, strategy="fedavg", launcher_kind="thread"
+        topo, MyModule(), fed_data, 2, strategy="fedavg", launcher_kind="thread"
     )
     assert isinstance(module, FloxModule)
     assert isinstance(train_history, pd.DataFrame)
 
 
 def test_complex_fit(data):
-    flock = Flock.from_yaml("examples/flocks/complex.yaml")
+    topo = Topology.from_yaml("examples/topos/complex.yaml")
     fed_data = federated_split(
         data,
-        flock,
+        topo,
         10,
         samples_alpha=10.0,
         labels_alpha=10.0,
     )
     module, train_history = federated_fit(
-        flock, MyModule(), fed_data, 2, strategy="fedavg", launcher_kind="thread"
+        topo, MyModule(), fed_data, 2, strategy="fedavg", launcher_kind="thread"
     )
     assert isinstance(module, FloxModule)
     assert isinstance(train_history, pd.DataFrame)

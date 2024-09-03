@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 if t.TYPE_CHECKING:
     import torch
 
-    from flight.flock import AggrState, NodeID, NodeState, WorkerState
+    from flight.topo import AggrState, NodeID, NodeState, WorkerState
     from flight.nn.typing import Loss, Params
     from flight.runtime import JobResult
     from flight.strategies.aggregator import AggregatorStrategy

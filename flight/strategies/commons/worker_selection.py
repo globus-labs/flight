@@ -5,16 +5,16 @@ from numpy import array
 from numpy.random import RandomState
 from numpy.typing import NDArray
 
-from flight.flock import FlockNode, NodeKind
+from flight.topo import Node, NodeKind
 
 
 def random_worker_selection(
-    children: Iterable[FlockNode],
+    children: Iterable[Node],
     participation: float = 1.0,
     probabilistic: bool = False,
     always_include_child_aggregators: bool = True,
     seed: int | None = None,
-) -> list[FlockNode]:
+) -> list[Node]:
     """
 
     Args:
@@ -35,10 +35,10 @@ def random_worker_selection(
 
 
 def fixed_random_worker_selection(
-    children: Iterable[FlockNode],
+    children: Iterable[Node],
     participation: float = 1.0,
     seed: int | None = None,
-) -> list[FlockNode]:
+) -> list[Node]:
     """
 
     Args:
@@ -59,11 +59,11 @@ def fixed_random_worker_selection(
 
 
 def prob_random_worker_selection(
-    children: Iterable[FlockNode],
+    children: Iterable[Node],
     participation: float = 1.0,
     always_include_child_aggregators: bool = True,
     seed: int | None = None,
-) -> list[FlockNode]:
+) -> list[Node]:
     """
 
     Args:
@@ -73,7 +73,7 @@ def prob_random_worker_selection(
         seed ():
 
     Returns:
-        list[FlockNode]
+        list[Node]
     """
     rand_state = RandomState(seed)
     selected_children = []

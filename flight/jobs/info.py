@@ -1,3 +1,3 @@
 """
-Utility jobs used to collect information about the nodes in a Flock.
+Utility jobs used to collect information about the nodes in a ``Topology``.
 """

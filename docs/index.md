@@ -1,15 +1,15 @@
-# Welcome to FLoX
+# Welcome to Flight
 
 ### Getting Started
-FLoX is a simple, highly customizable, and easy-to-deploy framework for launching Federated Learning processes across a
+Flight is a simple, highly customizable, and easy-to-deploy framework for launching Federated Learning processes across a
 decentralized network. It is designed to simulate FL workflows while also making it trivially easy to deploy them on
 real-world devices (e.g., Internet-of-Things and edge devices). Built on top of _Globus Compute_ (formerly known as
-_funcX_), FLoX is designed to run on anything that can be started as a Globus Compute Endpoint.
+_funcX_), Flight is designed to run on anything that can be started as a Globus Compute Endpoint.
 
 
-### What can FLoX do?
+### What can Flight do?
 
-FLoX is supports several state-of-the-art approaches for FL processes, including hierarchical and asynchronous FL.
+Flight supports several state-of-the-art approaches for FL processes, including hierarchical and asynchronous FL.
 
 |     |      2-tier      |   Hierarhchical   |
 | --: |:----------------:|:-----------------:|
@@ -19,19 +19,20 @@ FLoX is supports several state-of-the-art approaches for FL processes, including
 
 #### Installation
 
-The package can be found on pypi:
+The package can be found on, and installed from, GitHub. Installation is done with the
+following CLI call:
 
 ```bash
-pip install pyflox
+pip install git+https://github.com/globus-labs/flight
 ```
 
 #### Usage
 
-FLoX is a simple, highly-customizable, and easy-to-deploy framework for hierarchical, multi-tier federated learning
+Flight is a simple, highly-customizable, and easy-to-deploy framework for hierarchical, multi-tier federated learning
 systems built on top of the Globus Compute platform.
 
-```python title="Basic FLoX Example" linenums="1"
-from flight import Flock, federated_fit
+```python title="Basic Flight Example" linenums="1"
+from flight import Topology, federated_fit
 from torch import nn
 
 
@@ -39,10 +40,10 @@ class MyModule(nn.Module):
     ...
 
 
-flock = Flock.from_yaml("my_flock.yaml")
+topo = Topology.from_yaml("my_topo.yaml")
 federated_fit(
     module=MyModule(),
-    flock=flock,
+    topo=topo,
     strategy="fedavg",
     strategy_params={"participation_frac": 0.5},
     where="local",

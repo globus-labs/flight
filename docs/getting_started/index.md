@@ -2,10 +2,10 @@ Here, we provide a brief high-level overview of how to get started with FLoX.
 
 ```python
 from flight.run import federated_fit
-from flight.flock import Flock
+from flight.topo import Topology
 
-flock = Flock.from_yaml("sample-flock.yml")
+topo = Topology.from_yaml("sample-topo.yml")
 results = federated_fit(
-    flock, module_cls, datasets, num_global_rounds=10, strategy="fedavg"
+    topo, module_cls, datasets, num_global_rounds=10, strategy="fedavg"
 )
 ```

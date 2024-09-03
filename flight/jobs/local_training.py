@@ -6,7 +6,7 @@ from flight.jobs.protocols import TrainableJob
 
 if t.TYPE_CHECKING:
     from flight.data import FloxDataset
-    from flight.flock import FlockNode
+    from flight.topo import Node
     from flight.nn import FloxModule
     from flight.nn.typing import Params
     from flight.runtime import Result
@@ -17,8 +17,8 @@ if t.TYPE_CHECKING:
 class LocalTrainJob(TrainableJob):
     @staticmethod
     def __call__(
-        node: FlockNode,
-        parent: FlockNode,
+        node: Node,
+        parent: Node,
         global_model: FloxModule,
         module_state_dict: Params,
         dataset: FloxDataset,
@@ -31,9 +31,9 @@ class LocalTrainJob(TrainableJob):
         """Perform local training on a worker node.
 
         Args:
-            node (FlockNode):
+            node (Node):
             transfer (BaseTransfer): ...
-            parent (FlockNode):
+            parent (Node):
             strategy (Strategy):
             module (FloxModule):
             module_state_dict (Params):
@@ -48,7 +48,7 @@ class LocalTrainJob(TrainableJob):
         from copy import deepcopy
         from datetime import datetime
 
-        from flight.flock.states import WorkerState
+        from flight.topo.states import WorkerState
         from flight.nn.model_trainer import Trainer
         from flight.runtime import JobResult
 
@@ -132,8 +132,8 @@ class LocalTrainJob(TrainableJob):
 class DebugLocalTrainJob(TrainableJob):
     @staticmethod
     def __call__(
-        node: FlockNode,
-        parent: FlockNode,
+        node: Node,
+        parent: Node,
         global_model: FloxModule,
         module_state_dict: Params,
         dataset: FloxDataset,
@@ -160,7 +160,7 @@ class DebugLocalTrainJob(TrainableJob):
         import numpy as np
         import pandas
 
-        from flight.flock.states import WorkerState
+        from flight.topo.states import WorkerState
         from flight.runtime import JobResult
 
         local_module = global_model
@@ -191,62 +191,3 @@ class DebugLocalTrainJob(TrainableJob):
     def __name__(self) -> str:
         return "DebugLocalTrainJob"
 
-
-# def pure_debug_train_job(
-#     node: FlockNode,
-#     parent: FlockNode,
-#     global_model: FloxModule,
-#     module_state_dict: Params,
-#     dataset: FloxDataset,
-#     transfer: BaseTransfer,
-#     worker_strategy: WorkerStrategy,
-#     trainer_strategy: TrainerStrategy,
-#     **train_hyper_params,
-# ):  # -> Result:
-#     """
-#
-#     Args:
-#         node ():
-#         transfer ():
-#         parent ():
-#         strategy ():
-#         module (FloxModule): ...
-#
-#     Returns:
-#
-#     """
-#
-#     from datetime import datetime
-#
-#     import numpy as np
-#     import pandas
-#
-#     from flight.flock.states import WorkerState
-#     from flight.runtime import JobResult
-#
-#     local_module = global_model
-#     node_state = WorkerState(
-#         node.idx,
-#         global_model=local_module,
-#         local_model=local_module,
-#     )
-#     history = {
-#         "node/idx": [node.idx],
-#         "node/kind": [node.kind.to_str()],
-#         "parent/idx": [parent.idx],
-#         "parent/kind": [parent.kind.to_str()],
-#         "train/loss": [np.nan],
-#         "train/epoch": [np.nan],
-#         "train/batch_idx": [np.nan],
-#         "train/time": [datetime.now()],
-#         "mode": "debug",
-#     }
-#     history_df = pandas.DataFrame.from_dict(history)
-#
-#     print(f"\n\nlocal_training: {global_model=}\n\n")
-#
-#     result = JobResult(
-#         node_state, node.idx, node.kind, global_model.state_dict(), history_df
-#     )
-#     # result = JobResult(node_state, node.idx, node.kind, np.array([0]), history_df)
-#     return transfer.report(result)

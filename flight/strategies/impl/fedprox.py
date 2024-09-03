@@ -11,7 +11,7 @@ from flight.strategies.impl.fedsgd import FedSGDClient, FedSGDAggr
 from flight.strategies.strategy import DefaultTrainerStrategy
 
 if t.TYPE_CHECKING:
-    from flight.flock import WorkerState
+    from flight.topo import WorkerState
     from flight.nn.typing import Loss
 
 

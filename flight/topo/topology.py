@@ -10,7 +10,7 @@ import networkx as nx
 import yaml
 from matplotlib.axes import Axes
 
-from flight.flock.node import FlockNode, NodeID, NodeKind
+from flight.topo.node import Node, NodeID, NodeKind
 
 REQUIRED_ATTRS: set[str] = {
     "kind",
@@ -38,23 +38,25 @@ TODO: Make an `OmegaConf` standard.
 """
 
 
-class Flock:
+class Topology:
     topo: nx.DiGraph
     node_counter: int
-    leader: FlockNode | None
+    leader: Node | None
 
     def __init__(self, topo: nx.DiGraph | None = None, src: Path | str | None = None):
         """
 
         Args:
-            topo (nx.DiGraph | None): The topology (defined as a NetworkX ``nx.DiGraph``) of the
-                Flock network. If none is provided, then the Flock is initialized in "interactive"
-                mode. This means you can iteratively add nodes and edges to the Flock using
-                 ``Flock.add_node()`` and ``Flock.add_edge()``. This is *not* recommended.
-                 Defaults to ``None``.
+            topo (nx.DiGraph | None): The topology (defined as a NetworkX
+                ``nx.DiGraph``) of the Topology. If none is provided, then the
+                Topology is initialized in "interactive" mode. This means you can
+                iteratively add nodes and edges to the Topology using
+                ``Topology.add_node()`` and ``Topology.add_edge()``. This is *not*
+                recommended. Defaults to ``None``.
             src (Path | str | None): This identifies the source file that was used to
-                define the Flock network. This should only be used by the file constructor functions
-                (e.g., `from_yaml()`) and should not be used by the user. Defaults to ``None``.
+                define the Topology network. This should only be used by the file
+                constructor functions (e.g., `from_yaml()`) and should not be used
+                by the user. Defaults to ``None``.
         """
         self.node_counter: int = 0
         self.src = src
@@ -68,15 +70,13 @@ class Flock:
         else:
             self.topo = topo
             if not self.validate_topo():
-                raise ValueError(
-                    "Illegal topology!"
-                )  # TODO: Expand on this later, the validate function should throw errors.
+                raise ValueError("Illegal topology!")
 
             found_leader = False
             for idx, data in self.topo.nodes(data=True):
                 if data["kind"] is NodeKind.LEADER:
                     if not found_leader:
-                        self.leader = FlockNode(
+                        self.leader = Node(
                             idx=idx,
                             kind=data["kind"],
                             globus_compute_endpoint=data["globus_compute_endpoint"],
@@ -86,17 +86,17 @@ class Flock:
                         found_leader = True
                     else:
                         raise ValueError(
-                            "A legal Flock cannot have more than one leader."
+                            "A legal Topology cannot have more than one leader."
                         )
             if not found_leader:
-                raise ValueError("A legal Flock must have a leader.")
+                raise ValueError("A legal Topology must have a leader.")
 
     def add_node(
         self,
         kind: NodeKind | str,
         globus_compute_endpoint_id: UUID | None = None,
         proxystore_endpoint_id: UUID | None = None,
-    ) -> FlockNode:
+    ) -> Node:
         if isinstance(kind, str):
             kind = NodeKind.from_str(kind)
 
@@ -122,12 +122,13 @@ class Flock:
             **attrs ():
 
         Throws:
-            ValueError - Cannot add edges between nodes that do not already exist in the ``Flock`` instance.
+            ValueError - Cannot add edges between nodes that do not already exist in 
+            the ``Topology`` instance.
         """
         if any([u not in self.topo.nodes, v not in self.topo.nodes]):
             raise ValueError(
-                "`Flock` does not support adding edges between nodes that do not already exist. "
-                "Try adding each node first."
+                "`Topology` does not support adding edges between nodes that do not "
+                "already exist. Try adding each node first."
             )
         self.topo.add_edge(u, v, **attrs)
 
@@ -142,7 +143,7 @@ class Flock:
         ax: Axes | None = None,
     ) -> Axes:
         """
-        Draws the flock using Matplotlib. The nodes are organized as a tree with the proper
+        Draws the topo using Matplotlib. The nodes are organized as a tree with the proper
         hierarchy based on depth from the Leader node (root).
 
         Args:
@@ -180,7 +181,7 @@ class Flock:
 
         if self.leader is None:
             raise ValueError(
-                "There is no leader in the Flock. This is likely because no topology "
+                "There is no leader in the Topology. This is likely because no topology "
                 "has been created via interactive mode."
             )
         leader = [self.leader.idx]
@@ -215,7 +216,7 @@ class Flock:
         return ax
 
     def validate_topo(self) -> bool:
-        # STEP 1: Confirm that there only exists ONE leader in the Flock.
+        # STEP 1: Confirm that there only exists ONE leader in the Topology.
         leaders = []
         for idx, data in self.topo.nodes(data=True):
             if data["kind"] is NodeKind.LEADER:
@@ -223,7 +224,7 @@ class Flock:
         if len(leaders) != 1:
             return False
 
-        # STEP 2: Confirm that the Flock has a tree topology.
+        # STEP 2: Confirm that the Topology has a tree topology.
         if not nx.is_tree(self.topo):
             return False
 
@@ -232,8 +233,8 @@ class Flock:
 
         return True
 
-    def parent(self, node: FlockNode | NodeID | int) -> FlockNode:
-        if isinstance(node, FlockNode):
+    def parent(self, node: Node | NodeID | int) -> Node:
+        if isinstance(node, Node):
             idx = node.idx
         else:
             idx = node.idx
@@ -248,8 +249,8 @@ class Flock:
             )
         return self[parent_idx[0]]
 
-    def children(self, node: FlockNode | NodeID | int) -> Iterator[FlockNode]:
-        if isinstance(node, FlockNode):
+    def children(self, node: Node | NodeID | int) -> Iterator[Node]:
+        if isinstance(node, Node):
             idx = node.idx
         else:
             idx = node
@@ -258,8 +259,8 @@ class Flock:
         for child_idx in self.topo.successors(idx):
             yield self[child_idx]
 
-    def get_kind(self, node: FlockNode | NodeID | int) -> NodeKind:
-        if isinstance(node, FlockNode):
+    def get_kind(self, node: Node | NodeID | int) -> NodeKind:
+        if isinstance(node, Node):
             idx = node.idx
         else:
             idx = node
@@ -268,16 +269,16 @@ class Flock:
     # ================================================================================= #
 
     @staticmethod
-    def from_dict(content: dict[str, Any], src: Path | str | None = None) -> "Flock":
+    def from_dict(content: dict[str, Any], src: Path | str | None = None) -> "Topology":
         """
-        Imports a ``dict`` object to create a Flock network.
+        Imports a ``dict`` object to create a Topology network.
 
         Args:
-            content (dict[str, Any]): Dictionary that defines the Flock network.
+            content (dict[str, Any]): Dictionary that defines the Topology network.
             src (Path | str | None): Identifies the source file used to define
-                the Flock network. This should **not** be used by users. It is used by
-                ``Flock`` class methods that are built on top of this method
-                (e.g., ``Flock.from_yaml()``).
+                the Topology network. This should **not** be used by users. It is used by
+                ``Topology`` class methods that are built on top of this method
+                (e.g., ``Topology.from_yaml()``).
 
         Examples:
             >>> topo = {
@@ -300,11 +301,11 @@ class Flock:
             >>>         'children': []
             >>>     }
             >>> }
-            >>> flock = Flock.from_dict(topo)
-            >>> print(flock.number_of_workers) # outputs 2
+            >>> topo = Topology.from_dict(topo)
+            >>> print(topo.number_of_workers) # outputs 2
 
         Returns:
-            An instance of a Flock.
+            An instance of a Topology.
         """
         topo = nx.DiGraph()
 
@@ -330,49 +331,49 @@ class Flock:
             for child in values["children"]:
                 topo.add_edge(node_idx, child)
 
-        return Flock(topo=topo, src=src)
+        return Topology(topo=topo, src=src)
 
     @staticmethod
-    def from_json(path: Path | str) -> "Flock":
-        """Imports a .json file as a Flock.
+    def from_json(path: Path | str) -> "Topology":
+        """Imports a .json file as a Topology.
 
         Examples:
-            >>> flock = Flock.from_json("my_flock.json")
+            >>> topo = Topology.from_json("my_topo.json")
 
         Args:
-            path (Path | str): Must be a .json file defining a Flock topology.
+            path (Path | str): Must be a .json file defining a Topology topology.
 
         Returns:
-            An instance of a Flock.
+            An instance of a Topology.
         """
         # TODO: Figure out how to address the issue of JSON requiring string keys for `from_json()`.
         with open(path) as f:
             content = json.load(f)
-        return Flock.from_dict(content, src=path)
+        return Topology.from_dict(content, src=path)
 
     @staticmethod
-    def from_yaml(path: Path | str) -> "Flock":
-        """Imports a `.yaml` file as a Flock.
+    def from_yaml(path: Path | str) -> "Topology":
+        """Imports a `.yaml` file as a Topology.
 
         Examples:
-            >>> flock = Flock.from_yaml("my_flock.yaml")
+            >>> topo = Topology.from_yaml("my_topo.yaml")
 
         Args:
-            path (Path | str): Must be a .yaml file defining a Flock topology.
+            path (Path | str): Must be a .yaml file defining a Topology.
 
         Returns:
-            An instance of a Flock.
+            An instance of a Topology.
         """
         with open(path) as f:
             content = yaml.safe_load(f)
-        return Flock.from_dict(content, src=path)
+        return Topology.from_dict(content, src=path)
 
     # ================================================================================= #
 
     @property
     def globus_compute_ready(self) -> bool:
         """
-        True if the Flock instance has all necessary endpoints to be run across
+        True if the Topology instance has all necessary endpoints to be run across
         Globus Compute; False otherwise.
         """
         # TODO: The leader does NOT need a Globus Compute endpoint.
@@ -386,12 +387,13 @@ class Flock:
     @property
     def proxystore_ready(self) -> bool:
         """
-        This property informs users of whether their `Flock` has all the necessary information to support
-        data transmission over Proxystore (`True`) or not (`False`). Proxystore just requires that each
-        node in the Flock has its own `proxystore_endpoint`.
+        This property informs users of whether their `Topology` has all the necessary
+        information to support data transmission over Proxystore (`True`) or not
+        (`False`). Proxystore just requires that each node in the Topology has its own
+        `proxystore_endpoint`.
 
-        It is worth noting that Proxystore is necessary to transmit mid-to-large size model (roughly > 5MB
-        in size) with Globus Compute.
+        It is worth noting that Proxystore is necessary to transmit mid-to-large size
+        model (roughly > 5MB in size) with Globus Compute.
         """
         key = "proxystore_endpoint"
         for _idx, data in self.topo.nodes(data=True):
@@ -409,22 +411,22 @@ class Flock:
     #     return self.nodes(by_kind=NodeKind.LEADER)
 
     @property
-    def aggregators(self) -> Iterator[FlockNode]:
+    def aggregators(self) -> Iterator[Node]:
         """
-        The aggregator nodes of the Flock.
+        The aggregator nodes of the Topology.
 
         Returns:
-            Generator[FlockNode]
+            Generator[Node]
         """
         return self.nodes(by_kind=NodeKind.AGGREGATOR)
 
     @property
-    def workers(self) -> Iterator[FlockNode]:
+    def workers(self) -> Iterator[Node]:
         """
-        The worker nodes of the Flock.
+        The worker nodes of the Topology.
 
         Returns:
-            Generator[FlockNode]
+            Generator[Node]
         """
         return self.nodes(by_kind=NodeKind.WORKER)
 
@@ -447,12 +449,12 @@ class Flock:
 
     @functools.cached_property
     def number_of_aggregators(self) -> int:
-        """The number of aggregator nodes in the Flock."""
+        """The number of aggregator nodes in the Topology."""
         return len(list(self.aggregators))
 
     @functools.cached_property
     def number_of_workers(self) -> int:
-        """The number of worker nodes in the Flock."""
+        """The number of worker nodes in the Topology."""
         return len(list(self.workers))
 
     @functools.cached_property
@@ -463,11 +465,11 @@ class Flock:
                 return False
         return True
 
-    def nodes(self, by_kind: NodeKind | None = None) -> Iterator[FlockNode]:
+    def nodes(self, by_kind: NodeKind | None = None) -> Iterator[Node]:
         for idx, data in self.topo.nodes(data=True):
             if by_kind is not None and data["kind"] != by_kind:
                 continue
-            yield FlockNode(
+            yield Node(
                 idx=idx,
                 kind=data["kind"],
                 globus_compute_endpoint=data["globus_compute_endpoint"],
@@ -478,7 +480,7 @@ class Flock:
     # ================================================================================= #
 
     def __repr__(self):
-        return f"Flock(`{self.mode}`)"
+        return f"Topology(`{self.mode}`)"
 
-    def __getitem__(self, idx: NodeID) -> FlockNode:
-        return FlockNode(idx, **self.topo.nodes[idx])
+    def __getitem__(self, idx: NodeID) -> Node:
+        return Node(idx, **self.topo.nodes[idx])

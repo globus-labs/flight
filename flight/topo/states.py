@@ -7,24 +7,25 @@ if t.TYPE_CHECKING:
     from collections.abc import Iterable
     from typing import Any
 
-    from flight.flock import NodeID, FlockNode
+    from flight.topo import NodeID, Node
     from flight.nn import FloxModule
 
 
 @dataclass
 class NodeState:
     idx: NodeID
-    """The ID of the ``FlockNode`` that the ``NodeState`` corresponds with."""
+    """The ID of the ``Node`` that the ``NodeState`` corresponds with."""
 
     cache: dict[str, Any] = field(default_factory=dict)
-    """A dictionary containing extra data. This can be used as a temporary "store" to pass data between
-    callbacks for custom ``Strategy`` objects."""
+    """
+    A dictionary containing extra data. This can be used as a temporary "store" to 
+    pass data between callbacks for custom ``Strategy`` objects."""
 
     def __post_init__(self):
         if type(self) is NodeState:
             raise NotImplementedError(
-                "Cannot instantiate instance of ``NodeState`` (must instantiate instance of "
-                "subclasses: ``AggrState`` or ``WorkerState``)."
+                "Cannot instantiate instance of ``NodeState`` (must instantiate "
+                "instance of subclasses: ``AggrState`` or ``WorkerState``)."
             )
 
     def __iter__(self) -> Iterable[str]:
@@ -67,9 +68,9 @@ class NodeState:
 
 
 class AggrState(NodeState):
-    """State of an Aggregator node in a ``Flock``."""
+    """State of an Aggregator node in a ``Topology``."""
 
-    children: t.Iterable[FlockNode]
+    children: t.Iterable[Node]
 
     global_model: FloxModule | None
 
@@ -77,7 +78,7 @@ class AggrState(NodeState):
     def __init__(
         self,
         idx: NodeID,
-        children: t.Iterable[FlockNode],
+        children: t.Iterable[Node],
         global_model: FloxModule | None,
     ) -> None:
         super().__init__(idx)
@@ -86,7 +87,7 @@ class AggrState(NodeState):
 
 
 class WorkerState(NodeState):
-    """State of a Worker node in a ``Flock``."""
+    """State of a Worker node in a ``Topology``."""
 
     global_model: FloxModule | None = None
     """Global model."""

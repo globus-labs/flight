@@ -8,8 +8,8 @@ from proxystore.proxy import Proxy
 if typing.TYPE_CHECKING:
     from pandas import DataFrame
 
-    from flight.flock import NodeID, NodeKind
-    from flight.flock.states import NodeState
+    from flight.topo import NodeID, NodeKind
+    from flight.topo.states import NodeState
     from flight.nn.typing import Params
 
 import random
@@ -17,19 +17,21 @@ import random
 
 @dataclass
 class JobResult:
-    """A simple dataclass that is returned by jobs executed on Aggregator and Worker nodes in a ``Flock``.
+    """
+    A simple dataclass that is returned by jobs executed on Aggregator and Worker
+    nodes in a ``Topology``.
 
     Aggregators and Worker nodes have to return the same type of object to support hierarchical execution.
     """
 
     node_state: NodeState
-    """The state of the ``Flock`` node based on its kind."""
+    """The state of the ``Topology`` node based on its kind."""
 
     node_idx: NodeID
-    """The ID of the ``Flock`` node."""
+    """The ID of the ``Topology`` node."""
 
     node_kind: NodeKind
-    """The kind of the ``Flock`` node."""
+    """The kind of the ``Topology`` node."""
 
     params: Params
     """The ``Params`` of the PyTorch global_model (either aggregated or trained locally)."""

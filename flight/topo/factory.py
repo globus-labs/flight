@@ -5,19 +5,19 @@ import typing as t
 
 import networkx as nx
 
-from flight.flock import Flock, NodeKind
+from flight.topo import Topology, NodeKind
 
 if t.TYPE_CHECKING:
-    from flight.flock import FlockNode
+    from flight.topo import Node
 
 
-def create_standard_flock(num_workers: int, **edge_attrs) -> Flock:
-    flock = Flock()
-    flock.leader = flock.add_node("leader")
+def create_standard_topo(num_workers: int, **edge_attrs) -> Topology:
+    topo = Topology()
+    topo.leader = topo.add_node("leader")
     for _ in range(num_workers):
-        worker = flock.add_node("worker")
-        flock.add_edge(flock.leader.idx, worker.idx, **edge_attrs)
-    return flock
+        worker = topo.add_node("worker")
+        topo.add_edge(topo.leader.idx, worker.idx, **edge_attrs)
+    return topo
 
 
 def _choose_parents(tree: nx.DiGraph, children, parents):
@@ -33,12 +33,12 @@ def _choose_parents(tree: nx.DiGraph, children, parents):
         tree.add_edge(parent, child)
 
 
-def create_hierarchical_flock(
+def create_hierarchical_topo(
     workers: int, aggr_shape: t.Collection[int] | None = None, return_nx: bool = False
-) -> Flock | nx.DiGraph:
+) -> Topology | nx.DiGraph:
     client_idx = 0
-    flock = nx.DiGraph()
-    flock.add_node(
+    graph = nx.DiGraph()
+    graph.add_node(
         client_idx,
         kind=NodeKind.LEADER,
         proxystore_endpoint=None,
@@ -47,7 +47,7 @@ def create_hierarchical_flock(
     worker_nodes = []
     for i in range(workers):
         idx = i + 1
-        flock.add_node(
+        graph.add_node(
             idx,
             kind=NodeKind.WORKER,
             proxystore_endpoint=None,
@@ -57,10 +57,10 @@ def create_hierarchical_flock(
 
     if aggr_shape is None:
         for worker in worker_nodes:
-            flock.add_edge(client_idx, worker)
+            graph.add_edge(client_idx, worker)
         if return_nx:
-            return flock
-        return Flock(flock)
+            return graph
+        return Topology(graph)
 
     # Validate the values of the `aggr_shape` argument.
     for i in range(len(aggr_shape) - 1):
@@ -86,7 +86,7 @@ def create_hierarchical_flock(
 
         curr_aggrs = []
         for aggr in range(num_aggrs):
-            flock.add_node(
+            graph.add_node(
                 aggr_idx,
                 kind=NodeKind.AGGREGATOR,
                 proxystore_endpoint=None,
@@ -95,17 +95,17 @@ def create_hierarchical_flock(
             curr_aggrs.append(aggr_idx)
             aggr_idx += 1
 
-        _choose_parents(flock, curr_aggrs, last_aggrs)
+        _choose_parents(graph, curr_aggrs, last_aggrs)
         last_aggrs = curr_aggrs
 
-    _choose_parents(flock, worker_nodes, last_aggrs)
+    _choose_parents(graph, worker_nodes, last_aggrs)
 
     if return_nx:
-        return flock
-    return Flock(flock)
+        return graph
+    return Topology(graph)
 
 
-def created_balanced_hierarchical_flock(branching_factor: int, height: int):
+def created_balanced_hierarchical_topo(branching_factor: int, height: int):
     tree = nx.balanced_tree(branching_factor, height, create_using=nx.DiGraph)
     gce = "globus_compute_endpoint"
     pse = "proxystore_endpoint"
@@ -122,7 +122,7 @@ def created_balanced_hierarchical_flock(branching_factor: int, height: int):
         node_data[gce] = None
         node_data[pse] = None
 
-    return Flock(tree)
+    return Topology(tree)
 
 
 def from_yaml():
@@ -133,7 +133,7 @@ def from_dict(topo: dict[str, t.Any]):
     pass
 
 
-def from_list(topo: list[FlockNode | dict[str, t.Any]]):
+def from_list(topo: list[Node | dict[str, t.Any]]):
     pass
 
 

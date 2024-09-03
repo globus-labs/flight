@@ -3,7 +3,7 @@ from __future__ import annotations
 import typing as t
 
 if t.TYPE_CHECKING:
-    from flight.flock import WorkerState
+    from flight.topo import WorkerState
     from flight.nn.typing import Loss
 
 

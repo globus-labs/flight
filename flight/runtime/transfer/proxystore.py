@@ -13,22 +13,22 @@ if typing.TYPE_CHECKING:
 
     from proxystore.proxy import Proxy
 
-    from flight.flock import Flock
+    from flight.topo import Topology
 
 
 class ProxyStoreTransfer(BaseTransfer):
     def __init__(
-        self, flock: Flock, name: str = "default"
+        self, topo: Topology, name: str = "default"
     ) -> None:  # , store: str = "endpoint",):
-        if not flock.proxystore_ready:
+        if not topo.proxystore_ready:
             raise ValueError(
-                "Flock is not ready to use ProxyStore (i.e., `flock.proxystore_ready` "
-                "returns `False`). You need each node should have a valid ProxyStore "
-                "Endpoint UUID."
+                "Topology is not ready to use ProxyStore (i.e., "
+                "`topo.proxystore_ready` returns `False`). You need each node should "
+                "have a valid ProxyStore Endpoint UUID."
             )
 
         endpoints: list[str | UUID] = []
-        for node in flock.nodes():
+        for node in topo.nodes():
             assert node.proxystore_endpoint is not None
             endpoints.append(node.proxystore_endpoint)
 

@@ -9,14 +9,14 @@ from datetime import datetime
 import pandas as pd
 from tqdm import tqdm
 
-from flight.flock import FlockNode, NodeKind, AggrState
+from flight.topo import Node, NodeKind, AggrState
 from flight.jobs import LocalTrainJob, AggregateJob, DebugLocalTrainJob
 from flight.runtime.process.future_callbacks import all_child_futures_finished_cbk
 from flight.runtime.process.process import Process
 from flight.runtime.process.testing import test_model
 
 if t.TYPE_CHECKING:
-    from flight import Flock
+    from flight import Topology
     from flight.data import FloxDataset
     from flight.nn import FloxModule
     from flight.runtime.runtime import Runtime
@@ -36,7 +36,7 @@ class SyncProcessV2(Process):
     def __init__(
         self,
         runtime: Runtime,
-        flock: Flock,
+        topo: Topology,
         strategy: Strategy,
         module: FloxModule | None,
         dataset: FloxDataset,
@@ -45,7 +45,7 @@ class SyncProcessV2(Process):
         logging: bool = False,
     ):
         self.runtime = runtime
-        self.flock = flock
+        self.topo = topo
         self.strategy = strategy
         self.global_model = module
         self.dataset = dataset
@@ -89,10 +89,10 @@ class SyncProcessV2(Process):
         return self.global_model, history
 
     def step(
-        self, node: FlockNode | None = None, parent: FlockNode | None = None
+        self, node: Node | None = None, parent: Node | None = None
     ) -> Future[Result]:
         node = self._handle_node(node)
-        match self.flock.get_kind(node):
+        match self.topo.get_kind(node):
             case NodeKind.LEADER:
                 self.log("Launching task on the leader.")
                 return self._leader_tasks(node)
@@ -103,36 +103,37 @@ class SyncProcessV2(Process):
                 self.log(f"Launching task on worker {node.idx}.")
                 return self._worker_tasks(node, parent)
             case _:
-                k = self.flock.get_kind(node)
+                k = self.topo.get_kind(node)
                 raise ValueError(
-                    f"Illegal kind ({k}) of `FlockNode` (ID=`{node.idx}`)."
+                    f"Illegal kind ({k}) of `{Node.__class__.__name__}` "
+                    f"(ID=`{node.idx}`)."
                 )
 
-    def _handle_node(self, node: FlockNode | None) -> FlockNode:
+    def _handle_node(self, node: Node | None) -> Node:
         if node is None:
-            assert self.flock.leader is not None
-            return self.flock.leader
-        elif isinstance(node, FlockNode):
+            assert self.topo.leader is not None
+            return self.topo.leader
+        elif isinstance(node, Node):
             return node
         else:
             raise ValueError("SyncProcessV2._handle_node(): Illegal value for {node=}")
 
-    def _leader_tasks(self, node: FlockNode) -> Future[Result]:
+    def _leader_tasks(self, node: Node) -> Future[Result]:
         cli_strategy = self.client_strategy
-        children = list(self.flock.children(node.idx))
-        workers = list(self.flock.workers)
+        children = list(self.topo.children(node.idx))
+        workers = list(self.topo.workers)
         state = AggrState(node.idx, children, None)  # self.global_model)
 
         # STEP 1: Select worker nodes to train the neural network. Then trace parent nodes back to leader.
         self.log("Leader is selecting worker nodes.")
-        client_node = self.flock[self.flock.leader.idx]
+        client_node = self.topo[self.topo.leader.idx]
         selected_workers = cli_strategy.select_worker_nodes(state, workers, seed=None)
         intermediate_aggrs = set()
         for worker in selected_workers:
-            parent = self.flock.parent(worker)
+            parent = self.topo.parent(worker)
             while parent != client_node:
                 intermediate_aggrs.add(parent)
-                parent = self.flock.parent(parent)
+                parent = self.topo.parent(parent)
                 # self.log(f"Worker selection phase: {worker=}, {parent=}")
 
         self.log(f"Selected workers: {selected_workers}")
@@ -140,7 +141,7 @@ class SyncProcessV2(Process):
         # STEP 2: Identify the aggregator nodes that are ancestors of the selected worker nodes.
         self.log("Leader is identifying ancestral aggregators to worker nodes.")
         _selected_worker_set = set(selected_workers)
-        selected_client_children = set(self.flock.children(client_node))
+        selected_client_children = set(self.topo.children(client_node))
         if len(intermediate_aggrs) > 0:
             selected_client_children = selected_client_children.intersection(
                 intermediate_aggrs
@@ -152,7 +153,7 @@ class SyncProcessV2(Process):
 
         self._selected_children = {client_node: selected_client_children}
         for aggr in intermediate_aggrs:
-            aggr_succ = set(self.flock.children(aggr))
+            aggr_succ = set(self.topo.children(aggr))
             aggr_succ = aggr_succ.intersection(
                 intermediate_aggrs.union(_selected_worker_set)
             )
@@ -166,11 +167,11 @@ class SyncProcessV2(Process):
         return self._aggregator_tasks(node, self._selected_children[client_node])
 
     def _aggregator_tasks(
-        self, node: FlockNode, children: t.Iterable[FlockNode] | None = None
+        self, node: Node, children: t.Iterable[Node] | None = None
     ) -> Future[Result]:
         self.log(f"Preparing to submit AGGREGATION task on node {node.idx}.")
         if children is None:
-            children = self.flock.children(node)
+            children = self.topo.children(node)
 
         job = AggregateJob()
         state = AggrState(node.idx, children, None)
@@ -191,7 +192,7 @@ class SyncProcessV2(Process):
 
         return future
 
-    def _worker_tasks(self, node: FlockNode, parent: FlockNode) -> Future[Result]:
+    def _worker_tasks(self, node: Node, parent: Node) -> Future[Result]:
         self.log(f"Preparing to submit WORKER task on node {node.idx}.")
 
         if self.debug_mode:

@@ -56,7 +56,7 @@ Simulated data are needed for FL research and experimentation for discovering be
 parameter communication, worker/client/endpoint selection, etc. In this way, a simulated dataset takes a dataset
 that is naturally *centralized* and converts it into a *decentralized* dataset. Unlike real-world data that are
 already decentralized (e.g., data on decentralized sensors), simulated data will take a benchmark dataset (e.g.,
-ImageNet) and split across a ``Flock`` network.
+ImageNet) and split across a ``Topology``.
 
 FLoX includes utility functions to simplify the conversion from a standard, centralized PyTorch dataset to a
 simulated, decentralized dataset.

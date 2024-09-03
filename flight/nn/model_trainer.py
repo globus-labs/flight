@@ -5,7 +5,7 @@ import pandas as pd
 import torch
 from torch.utils.data import DataLoader
 
-from flight.flock.states import WorkerState
+from flight.topo.states import WorkerState
 from flight.nn import FloxModule
 from flight.nn.logger.csv import CSVLogger
 from flight.strategies import TrainerStrategy

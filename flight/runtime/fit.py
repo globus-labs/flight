@@ -5,7 +5,7 @@ from pandas import DataFrame
 
 import flight.strategies as strats
 from flight.data import FloxDataset
-from flight.flock import Flock
+from flight.topo import Topology
 from flight.nn import FloxModule
 from flight.nn.typing import Kind
 from flight.runtime.launcher import (
@@ -41,7 +41,7 @@ def create_launcher(kind: str, **launcher_cfg) -> Launcher:
 
 
 def federated_fit(
-    flock: Flock,
+    topo: Topology,
     module: FloxModule,
     datasets: FloxDataset,
     num_global_rounds: int,
@@ -62,7 +62,7 @@ def federated_fit(
     """
 
     Args:
-        flock (Flock):
+        topo (Topology):
         module (FloxModule):
         datasets (FloxDataset):
         num_global_rounds (int):
@@ -77,13 +77,13 @@ def federated_fit(
         debug_mode (bool): ...
 
     Returns:
-        The trained global module hosted on the leader of `flock`.
+        The trained global module hosted on the leader of `topo`.
         The history metrics from training.
     """
     launcher_cfg = dict() if launcher_cfg is None else launcher_cfg
     launcher = create_launcher(launcher_kind, **launcher_cfg)
     if isinstance(launcher, GlobusComputeLauncher):
-        transfer = ProxyStoreTransfer(flock)
+        transfer = ProxyStoreTransfer(topo)
     elif isinstance(launcher, ParslLauncher):
         print(f"Yadu : setting RedisTransfer to {redis_ip_address}")
         transfer = RedisTransfer(ip_address=redis_ip_address)
@@ -106,7 +106,7 @@ def federated_fit(
         case "sync":
             process = SyncProcess(
                 runtime=runtime,
-                flock=flock,
+                topo=topo,
                 num_global_rounds=num_global_rounds,
                 module=module,
                 dataset=datasets,
@@ -116,7 +116,7 @@ def federated_fit(
         case "sync-v2":
             process = SyncProcessV2(
                 runtime=runtime,
-                flock=flock,
+                topo=topo,
                 global_rounds=num_global_rounds,
                 module=module,
                 dataset=datasets,
@@ -127,7 +127,7 @@ def federated_fit(
         case "async":
             process = AsyncProcess(
                 runtime=runtime,
-                flock=flock,
+                topo=topo,
                 num_global_rounds=num_global_rounds,
                 module=module,
                 dataset=datasets,

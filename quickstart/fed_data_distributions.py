@@ -8,14 +8,14 @@ from torchvision.transforms import ToTensor
 try:
     sys.path.append("..")
     from flight.data.utils import fed_barplot, federated_split
-    from flight.flock import Flock
+    from flight.topo import Topology
 except Exception as e:
     raise ImportError("unable to import FloX libraries") from e
 
 plt.style.use("ggplot")
 
 if __name__ == "__main__":
-    flock = Flock.from_yaml("../examples/flocks/2-tier.yaml")
+    topo = Topology.from_yaml("../examples/topos/2-tier.yaml")
     mnist = FashionMNIST(
         root=os.environ["TORCH_DATASETS"],
         download=False,
@@ -35,9 +35,9 @@ if __name__ == "__main__":
                 ax = axes
 
             fed_data = federated_split(
-                mnist, flock, 10, samples_alpha=samples_alpha, labels_alpha=labels_alpha
+                mnist, topo, 10, samples_alpha=samples_alpha, labels_alpha=labels_alpha
             )
-            assert len(fed_data) == len(list(flock.workers))
+            assert len(fed_data) == len(list(topo.workers))
 
             fed_barplot(fed_data, 10, ax=ax)
             ax.set_title(

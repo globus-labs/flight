@@ -1,6 +1,6 @@
 import typing as t
 
-from flight.flock import AggrState, NodeID, NodeState
+from flight.topo import AggrState, NodeID, NodeState
 from flight.nn.typing import Params
 from flight.strategies import Strategy
 from flight.strategies.commons.averaging import average_state_dicts
