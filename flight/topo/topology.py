@@ -266,7 +266,7 @@ class Topology:
             idx = node
         return self.topo.nodes[idx]["kind"]
 
-    # ================================================================================= #
+    ####################################################################################
 
     @staticmethod
     def from_dict(content: dict[str, Any], src: Path | str | None = None) -> "Topology":
@@ -368,7 +368,7 @@ class Topology:
             content = yaml.safe_load(f)
         return Topology.from_dict(content, src=path)
 
-    # ================================================================================= #
+    ####################################################################################
 
     @property
     def globus_compute_ready(self) -> bool:
@@ -477,7 +477,7 @@ class Topology:
                 # children_idx: Sequence[NodeID] | None
             )
 
-    # ================================================================================= #
+    ####################################################################################
 
     def __repr__(self):
         return f"Topology(`{self.mode}`)"
