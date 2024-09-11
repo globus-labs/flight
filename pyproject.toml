@@ -3,7 +3,7 @@ requires = ["setuptools>=64.0", "setuptools_scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "flox"
+name = "flight"
 version = "0.1.0"
 
 description = "FLoX is a flexible, easy-to-deploy framework for serverless federated learning, with support for hierarchical and asynchronous federated learning."
@@ -46,5 +46,5 @@ addopts = [
 
 
 [tool.setuptools.packages.find]
-include = ["flox*"]
+include = ["flight*"]
 namespaces = false
