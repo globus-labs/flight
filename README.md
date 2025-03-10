@@ -1,3 +1,5 @@
+![logo](docs/flight-logo.png)
+
 # Flight
 Flight is a modular, easy-to-use federated learning framework built on top of Globus Compute, a federated Function-as-a-Service platform.
 
